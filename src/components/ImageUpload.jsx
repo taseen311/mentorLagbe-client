@@ -4,9 +4,9 @@
 import Image from "next/image";
 import { useState } from "react";
 
-export default function ImageUpload({ onImageUpload }) {
+export default function ImageUpload({ onImageUpload, currentImage }) {
     const [uploading, setUploading] = useState(false);
-    const [preview, setPreview] = useState("");
+    const [preview, setPreview] = useState(currentImage || "");
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -77,6 +77,8 @@ export default function ImageUpload({ onImageUpload }) {
 
             {preview && (
                 <Image
+                    height={50}
+                    width={50}
                     src={preview}
                     alt="Uploaded preview"
                     className="h-24 w-24 rounded-full object-cover"

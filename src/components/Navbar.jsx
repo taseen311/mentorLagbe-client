@@ -1,6 +1,6 @@
 
 "use client";
-
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
@@ -87,6 +87,20 @@ export default function Navbar() {
                 <div className="hidden items-center gap-2.5 lg:flex">
                     {!isPending && user ? (
                         <>
+                            {user.image ? (
+                                <Image
+                                    src={user.image}
+                                    alt={user.name}
+                                    width={40}
+                                    height={40}
+                                    unoptimized
+                                    className="h-10 w-10 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
+                                    {user.name?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <div className="text-right">
                                 <p className="text-sm font-bold text-slate-800">
                                     {user.name}

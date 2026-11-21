@@ -1,6 +1,6 @@
 
 "use client";
-
+import ImageUpload from "@/components/ImageUpload";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
@@ -8,9 +8,11 @@ export default function ProfilePage() {
     const { data: session, isPending } = authClient.useSession();
 
     const [name, setName] = useState(null);
+    const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const user = session?.user;
+    console.log("Current User:", user);
 
     // Use the edited name, or fall back to the current profile name
     const displayName = name ?? user?.name ?? "";
@@ -26,9 +28,15 @@ export default function ProfilePage() {
         try {
             setLoading(true);
 
-            const { error } = await authClient.updateUser({
+            const updateData = {
                 name: displayName.trim(),
-            });
+            };
+
+            if (image) {
+                updateData.image = image;
+            }
+
+            const { error } = await authClient.updateUser(updateData);
 
             if (error) {
                 alert(error.message || "Profile update failed!");
@@ -70,9 +78,14 @@ export default function ProfilePage() {
                         <span className="font-semibold">Role:</span>{" "}
                         <span className="capitalize">{user.role}</span>
                     </p>
+                    <p>Profile Image: {user.image || "No image saved"}</p>
                 </div>
 
                 <form onSubmit={handleUpdateProfile}>
+                    <ImageUpload
+                        onImageUpload={setImage}
+                        currentImage={user.image}
+                    />
                     <label
                         htmlFor="name"
                         className="mb-2 block text-sm font-semibold text-slate-700"

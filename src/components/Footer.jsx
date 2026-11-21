@@ -133,7 +133,7 @@ export default function Footer() {
             <div className="border-t border-slate-800">
                 <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-center text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
                     <p>
-                        © {new Date().getFullYear()} MentorLagbe. All rights reserved.
+                        © 2026 MentorLagbe. All rights reserved.
                     </p>
 
                     <p>Made with care for better learning.</p>
