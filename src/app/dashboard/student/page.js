@@ -1,0 +1,3 @@
+export default function StudentDashboard() {
+    return <h1>Welcome to Student Dashboard!</h1>;
+}

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import {
     GraduationCap,
@@ -26,6 +27,13 @@ const navLinks = [
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
+    const { data: session, isPending } = authClient.useSession();
+    const user = session?.user;
+    const userRole = user?.role;
+
+    const dashboardPath = userRole
+        ? `/dashboard/${userRole}`
+        : "/login";
 
     const closeMenu = () => setIsMenuOpen(false);
 
@@ -61,34 +69,78 @@ export default function Navbar() {
                                 key={link.href}
                                 href={link.href}
                                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition ${active
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                                    ? "bg-blue-50 text-blue-600"
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
                                     }`}
                             >
                                 <Icon size={16} strokeWidth={2} />
                                 {link.name}
                             </Link>
+
+
                         );
                     })}
+
                 </div>
 
                 {/* Auth Actions */}
                 <div className="hidden items-center gap-2.5 lg:flex">
-                    <Link
-                        href="/login"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50"
-                    >
-                        <UserRound size={16} />
-                        Sign In
-                    </Link>
+                    {!isPending && user ? (
+                        <>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-slate-800">
+                                    {user.name}
+                                </p>
+                                <p className="text-xs capitalize text-slate-500">
+                                    {userRole}
+                                </p>
+                            </div>
 
-                    <Link
-                        href="/register"
-                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-200/60 transition hover:-translate-y-0.5 hover:shadow-lg"
-                    >
-                        Get Started
-                        <ArrowUpRight size={16} />
-                    </Link>
+                            <Link
+                                href={dashboardPath}
+                                className="rounded-lg bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-600 hover:bg-blue-100"
+                            >
+                                Dashboard
+                            </Link>
+
+                            <Link
+                                href="/profile"
+                                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                Update Profile
+                            </Link>
+
+                            <button
+                                onClick={async () => {
+                                    await authClient.signOut();
+                                    window.location.href = "/";
+                                }}
+                                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+                            >
+                                Sign Out
+                            </button>
+
+                        </>
+                    ) : !isPending ? (
+                        <>
+                            <Link
+                                href="/login"
+                                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                                <UserRound size={16} />
+                                Sign In
+                            </Link>
+
+
+                            <Link
+                                href="/register"
+                                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-200/60 transition hover:-translate-y-0.5 hover:shadow-lg"
+                            >
+                                Get Started
+                                <ArrowUpRight size={16} />
+                            </Link>
+                        </>
+                    ) : null}
                 </div>
 
                 {/* Mobile Toggle */}
@@ -101,6 +153,8 @@ export default function Navbar() {
                     {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
                 </button>
             </nav>
+
+            {/* Mobile Menu */}
 
             {/* Mobile Menu */}
             {isMenuOpen && (
@@ -116,8 +170,8 @@ export default function Navbar() {
                                     href={link.href}
                                     onClick={closeMenu}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${active
-                                            ? "bg-blue-50 text-blue-600"
-                                            : "text-slate-700 hover:bg-slate-50"
+                                        ? "bg-blue-50 text-blue-600"
+                                        : "text-slate-700 hover:bg-slate-50"
                                         }`}
                                 >
                                     <Icon size={18} />
@@ -128,26 +182,69 @@ export default function Navbar() {
 
                         <div className="my-2 border-t border-slate-100" />
 
-                        <Link
-                            href="/login"
-                            onClick={closeMenu}
-                            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-slate-700"
-                        >
-                            <UserRound size={18} />
-                            Sign In
-                        </Link>
+                        {!isPending && user ? (
+                            <>
+                                <div className="px-3 py-2">
+                                    <p className="font-bold text-slate-800">
+                                        {user.name}
+                                    </p>
+                                    <p className="text-xs capitalize text-slate-500">
+                                        {userRole}
+                                    </p>
+                                </div>
 
-                        <Link
-                            href="/register"
-                            onClick={closeMenu}
-                            className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-bold text-white"
-                        >
-                            Get Started
-                            <ArrowUpRight size={17} />
-                        </Link>
+                                <Link
+                                    href={dashboardPath}
+                                    onClick={closeMenu}
+                                    className="rounded-lg px-3 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                                >
+                                    Dashboard
+                                </Link>
+
+                                <Link
+                                    href="/profile"
+                                    onClick={closeMenu}
+                                    className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                    Update Profile
+                                </Link>
+
+                                <button
+                                    onClick={async () => {
+                                        await authClient.signOut();
+                                        closeMenu();
+                                        window.location.href = "/";
+                                    }}
+                                    className="rounded-lg px-3 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                                >
+                                    Sign Out
+                                </button>
+                            </>
+                        ) : !isPending ? (
+                            <>
+                                <Link
+                                    href="/login"
+                                    onClick={closeMenu}
+                                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-slate-700"
+                                >
+                                    <UserRound size={18} />
+                                    Sign In
+                                </Link>
+
+                                <Link
+                                    href="/register"
+                                    onClick={closeMenu}
+                                    className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-bold text-white"
+                                >
+                                    Get Started
+                                    <ArrowUpRight size={17} />
+                                </Link>
+                            </>
+                        ) : null}
                     </div>
                 </div>
             )}
+
         </header>
     );
 }
