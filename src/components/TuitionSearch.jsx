@@ -52,6 +52,32 @@ export default function TuitionSearch({ initialTuitions }) {
         }
     };
 
+    const handleReset = async () => {
+        setSearch("");
+        setMode("");
+        setClassLevel("");
+
+        try {
+            setLoading(true);
+
+            const res = await fetch(
+                "http://localhost:5000/api/tuitions",
+                { cache: "no-store" }
+            );
+
+            if (!res.ok) {
+                throw new Error("Failed to reset filters");
+            }
+
+            const data = await res.json();
+            setTuitions(data);
+        } catch (error) {
+            console.error("Reset Error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <section>
             <form onSubmit={handleSearch} className="mb-8 flex gap-3">
@@ -89,6 +115,15 @@ export default function TuitionSearch({ initialTuitions }) {
                         </option>
                     ))}
                 </select>
+
+                <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={loading}
+                    className="rounded-xl border border-slate-200 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                    Reset
+                </button>
 
                 <button
                     type="submit"
