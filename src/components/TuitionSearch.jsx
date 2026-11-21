@@ -8,7 +8,12 @@ import { Search } from "lucide-react";
 
 export default function TuitionSearch({ initialTuitions }) {
     const [search, setSearch] = useState("");
-    const [tuitions, setTuitions] = useState(initialTuitions);
+    const [tuitions, setTuitions] = useState(initialTuitions.tuitions);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalTuitions, setTotalTuitions] = useState(
+        initialTuitions.totalTuitions
+    );
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState("");
     const [classLevel, setClassLevel] = useState("");
@@ -17,6 +22,7 @@ export default function TuitionSearch({ initialTuitions }) {
         e.preventDefault();
 
         try {
+            setCurrentPage(1);
             setLoading(true);
 
             const params = new URLSearchParams();
@@ -43,7 +49,11 @@ export default function TuitionSearch({ initialTuitions }) {
             }
 
             const data = await res.json();
-            setTuitions(data);
+
+            setTuitions(data.tuitions);
+            setTotalTuitions(data.totalTuitions);
+            setTotalPages(data.totalPages);
+            setCurrentPage(data.currentPage);
 
         } catch (error) {
             console.error("Search Error:", error);
@@ -70,13 +80,54 @@ export default function TuitionSearch({ initialTuitions }) {
             }
 
             const data = await res.json();
-            setTuitions(data);
+
+            setTuitions(data.tuitions);
+            setTotalTuitions(data.totalTuitions);
+            setTotalPages(data.totalPages);
+            setCurrentPage(data.currentPage);
         } catch (error) {
             console.error("Reset Error:", error);
         } finally {
             setLoading(false);
         }
     };
+
+
+    const handlePageChange = async (page) => {
+        try {
+            setLoading(true);
+
+            const params = new URLSearchParams();
+
+            if (search.trim()) params.append("search", search.trim());
+            if (mode) params.append("mode", mode);
+            if (classLevel) params.append("classLevel", classLevel);
+
+            params.append("page", page);
+
+            const res = await fetch(
+                `http://localhost:5000/api/tuitions?${params.toString()}`,
+                { cache: "no-store" }
+            );
+
+            if (!res.ok) {
+                throw new Error("Failed to change page");
+            }
+
+            const data = await res.json();
+
+            setTuitions(data.tuitions);
+            setTotalTuitions(data.totalTuitions);
+            setTotalPages(data.totalPages);
+            setCurrentPage(data.currentPage);
+
+        } catch (error) {
+            console.error("Pagination Error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <section>
@@ -158,6 +209,43 @@ export default function TuitionSearch({ initialTuitions }) {
                     </p>
                 </div>
             )}
+
+            {totalPages > 1 && (
+                <div className="mt-10 flex items-center justify-center gap-3">
+
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1 || loading}
+                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Previous
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i + 1}
+                            onClick={() => handlePageChange(i + 1)}
+                            disabled={loading}
+                            className={`rounded-lg px-4 py-2 text-sm font-semibold ${currentPage === i + 1
+                                ? "bg-blue-600 text-white"
+                                : "border border-slate-200 text-slate-700"
+                                }`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages || loading}
+                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Next
+                    </button>
+
+                </div>
+            )}
+
         </section>
     );
 }
