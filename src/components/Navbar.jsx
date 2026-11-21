@@ -198,13 +198,26 @@ export default function Navbar() {
 
                         {!isPending && user ? (
                             <>
-                                <div className="px-3 py-2">
-                                    <p className="font-bold text-slate-800">
-                                        {user.name}
-                                    </p>
-                                    <p className="text-xs capitalize text-slate-500">
-                                        {userRole}
-                                    </p>
+                                <div className="flex items-center gap-3 px-3 py-3">
+                                    {user.image ? (
+                                        <Image
+                                            src={user.image}
+                                            alt={user.name}
+                                            width={44}
+                                            height={44}
+                                            unoptimized
+                                            className="h-11 w-11 rounded-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
+                                            {user.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <p className="font-bold text-slate-800">{user.name}</p>
+                                        <p className="text-xs capitalize text-slate-500">{userRole}</p>
+                                    </div>
                                 </div>
 
                                 <Link

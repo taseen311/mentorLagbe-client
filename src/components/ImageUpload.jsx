@@ -4,7 +4,9 @@
 import Image from "next/image";
 import { useState } from "react";
 
-export default function ImageUpload({ onImageUpload, currentImage }) {
+export default function ImageUpload({ onImageUpload, currentImage,
+    label = "Profile Picture"
+}) {
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(currentImage || "");
 
@@ -62,7 +64,7 @@ export default function ImageUpload({ onImageUpload, currentImage }) {
     return (
         <div className="space-y-4">
             <label className="block text-sm font-semibold text-slate-700">
-                Profile Picture
+                {label}
             </label>
 
             <input
