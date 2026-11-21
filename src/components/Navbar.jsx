@@ -3,105 +3,147 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+    GraduationCap,
+    House,
+    BookOpen,
+    Tags,
+    Info,
+    UserRound,
+    ArrowUpRight,
+    Menu,
+    X,
+} from "lucide-react";
 
 const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Browse Tuitions", href: "/tuitions" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "About", href: "/about" },
+    { name: "Home", href: "/", icon: House },
+    { name: "Browse Tuitions", href: "/tuitions", icon: BookOpen },
+    { name: "Pricing", href: "/pricing", icon: Tags },
+    { name: "About", href: "/about", icon: Info },
 ];
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const pathname = usePathname();
+
+    const closeMenu = () => setIsMenuOpen(false);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-md">
-            <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
+            <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
 
-                {/* Logo */}
-                <Link href="/" className="text-2xl font-extrabold tracking-tight">
-                    <span className="text-brand-600">Mentor</span>
-                    <span className="text-slate-900">Lagbe</span>
-                    <span className="text-brand-600">.</span>
+                {/* Brand */}
+                <Link href="/" onClick={closeMenu} className="flex items-center gap-2.5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-md shadow-blue-200/70">
+                        <GraduationCap size={23} />
+                    </div>
+
+                    <div>
+                        <p className="text-xl font-extrabold tracking-tight text-slate-900">
+                            Mentor<span className="text-blue-600">Lagbe</span>
+                            <span className="text-violet-600">.</span>
+                        </p>
+                        <p className="-mt-0.5 text-[9px] font-semibold tracking-[2px] text-slate-400">
+                            LEARN • GROW • SUCCEED
+                        </p>
+                    </div>
                 </Link>
 
-                {/* Desktop Navigation */}
-                <div className="hidden items-center gap-8 md:flex">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className="text-sm font-medium text-slate-600 transition hover:text-brand-600"
-                        >
-                            {link.name}
-                        </Link>
-                    ))}
+                {/* Desktop Links */}
+                <div className="hidden items-center gap-1 lg:flex">
+                    {navLinks.map((link) => {
+                        const Icon = link.icon;
+                        const active = pathname === link.href;
+
+                        return (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={`flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition ${active
+                                        ? "bg-blue-50 text-blue-600"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                                    }`}
+                            >
+                                <Icon size={16} strokeWidth={2} />
+                                {link.name}
+                            </Link>
+                        );
+                    })}
                 </div>
 
-                {/* Desktop Auth Buttons */}
-                <div className="hidden items-center gap-3 md:flex">
+                {/* Auth Actions */}
+                <div className="hidden items-center gap-2.5 lg:flex">
                     <Link
                         href="/login"
-                        className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
+                        <UserRound size={16} />
                         Sign In
                     </Link>
 
                     <Link
                         href="/register"
-                        className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-200/60 transition hover:-translate-y-0.5 hover:shadow-lg"
                     >
                         Get Started
+                        <ArrowUpRight size={16} />
                     </Link>
                 </div>
 
-                {/* Mobile Menu Button */}
+                {/* Mobile Toggle */}
                 <button
-                    type="button"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    aria-label="Toggle navigation menu"
+                    aria-label="Toggle menu"
                     aria-expanded={isMenuOpen}
-                    className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 md:hidden"
+                    className="rounded-lg bg-slate-50 p-2 text-slate-700 hover:bg-blue-50 hover:text-blue-600 lg:hidden"
                 >
-                    {isMenuOpen ? (
-                        <span className="text-2xl">✕</span>
-                    ) : (
-                        <span className="text-2xl">☰</span>
-                    )}
+                    {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
                 </button>
             </nav>
 
-            {/* Mobile Navigation */}
+            {/* Mobile Menu */}
             {isMenuOpen && (
-                <div className="border-t border-slate-100 bg-white px-4 py-4 md:hidden">
-                    <div className="flex flex-col gap-4">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="text-sm font-medium text-slate-700 hover:text-brand-600"
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
+                <div className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
+                    <div className="mx-auto flex max-w-7xl flex-col gap-1">
+                        {navLinks.map((link) => {
+                            const Icon = link.icon;
+                            const active = pathname === link.href;
 
-                        <hr className="border-slate-100" />
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    onClick={closeMenu}
+                                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${active
+                                            ? "bg-blue-50 text-blue-600"
+                                            : "text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                >
+                                    <Icon size={18} />
+                                    {link.name}
+                                </Link>
+                            );
+                        })}
+
+                        <div className="my-2 border-t border-slate-100" />
 
                         <Link
                             href="/login"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="text-sm font-semibold text-slate-700"
+                            onClick={closeMenu}
+                            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-slate-700"
                         >
+                            <UserRound size={18} />
                             Sign In
                         </Link>
 
                         <Link
                             href="/register"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="rounded-lg bg-brand-600 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-brand-700"
+                            onClick={closeMenu}
+                            className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-bold text-white"
                         >
                             Get Started
+                            <ArrowUpRight size={17} />
                         </Link>
                     </div>
                 </div>
@@ -109,3 +151,4 @@ export default function Navbar() {
         </header>
     );
 }
+
