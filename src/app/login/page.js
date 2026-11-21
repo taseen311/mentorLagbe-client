@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -39,6 +41,18 @@ export default function LoginPage() {
             }
 
             console.log("Login Successful:", data);
+            const role = data?.user?.role;
+
+            if (role === "student") {
+                router.push("/dashboard/student");
+            } else if (role === "tutor") {
+                router.push("/dashboard/tutor");
+            } else if (role === "admin") {
+                router.push("/dashboard/admin");
+            } else {
+                alert("User role not found!");
+            }
+            console.log("User Role:", data?.user?.role);
             alert("Login successful!");
 
         } catch (error) {
