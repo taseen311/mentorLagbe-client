@@ -1,11 +1,12 @@
 
 import { notFound } from "next/navigation";
 import ApplyButton from "@/components/ApplyButton";
+export const instant = false;
 
 async function getTuition(id) {
     try {
         const res = await fetch(
-            `http://localhost:5000/api/tuitions/${id}`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/tuitions/${id}`,
             { cache: "no-store" }
         );
 

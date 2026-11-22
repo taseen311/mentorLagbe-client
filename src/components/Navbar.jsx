@@ -1,7 +1,8 @@
 
 "use client";
+
 import Image from "next/image";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
@@ -24,10 +25,13 @@ const navLinks = [
     { name: "About", href: "/about", icon: Info },
 ];
 
-export default function Navbar() {
+// Main Navbar Content
+function NavbarContent() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
+
     const { data: session, isPending } = authClient.useSession();
+
     const user = session?.user;
     const userRole = user?.role;
 
@@ -42,7 +46,11 @@ export default function Navbar() {
             <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
 
                 {/* Brand */}
-                <Link href="/" onClick={closeMenu} className="flex items-center gap-2.5">
+                <Link
+                    href="/"
+                    onClick={closeMenu}
+                    className="flex items-center gap-2.5"
+                >
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-md shadow-blue-200/70">
                         <GraduationCap size={23} />
                     </div>
@@ -52,8 +60,9 @@ export default function Navbar() {
                             Mentor<span className="text-blue-600">Lagbe</span>
                             <span className="text-violet-600">.</span>
                         </p>
+
                         <p className="-mt-0.5 text-[9px] font-semibold tracking-[2px] text-slate-400">
-                            LEARN • GROWw • SUCCEED
+                            LEARN • GROW • SUCCEED
                         </p>
                     </div>
                 </Link>
@@ -69,28 +78,25 @@ export default function Navbar() {
                                 key={link.href}
                                 href={link.href}
                                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition ${active
-                                    ? "bg-blue-50 text-blue-600"
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                                        ? "bg-blue-50 text-blue-600"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
                                     }`}
                             >
                                 <Icon size={16} strokeWidth={2} />
                                 {link.name}
                             </Link>
-
-
                         );
                     })}
-
                 </div>
 
-                {/* Auth Actions */}
+                {/* Desktop Auth Actions */}
                 <div className="hidden items-center gap-2.5 lg:flex">
                     {!isPending && user ? (
                         <>
                             {user.image ? (
                                 <Image
                                     src={user.image}
-                                    alt={user.name}
+                                    alt={user.name || "User"}
                                     width={40}
                                     height={40}
                                     unoptimized
@@ -101,6 +107,7 @@ export default function Navbar() {
                                     {user.name?.charAt(0).toUpperCase()}
                                 </div>
                             )}
+
                             <div className="text-right">
                                 <p className="text-sm font-bold text-slate-800">
                                     {user.name}
@@ -133,7 +140,6 @@ export default function Navbar() {
                             >
                                 Sign Out
                             </button>
-
                         </>
                     ) : !isPending ? (
                         <>
@@ -144,7 +150,6 @@ export default function Navbar() {
                                 <UserRound size={16} />
                                 Sign In
                             </Link>
-
 
                             <Link
                                 href="/register"
@@ -169,11 +174,10 @@ export default function Navbar() {
             </nav>
 
             {/* Mobile Menu */}
-
-            {/* Mobile Menu */}
             {isMenuOpen && (
                 <div className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
                     <div className="mx-auto flex max-w-7xl flex-col gap-1">
+
                         {navLinks.map((link) => {
                             const Icon = link.icon;
                             const active = pathname === link.href;
@@ -184,8 +188,8 @@ export default function Navbar() {
                                     href={link.href}
                                     onClick={closeMenu}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${active
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-slate-700 hover:bg-slate-50"
+                                            ? "bg-blue-50 text-blue-600"
+                                            : "text-slate-700 hover:bg-slate-50"
                                         }`}
                                 >
                                     <Icon size={18} />
@@ -202,7 +206,7 @@ export default function Navbar() {
                                     {user.image ? (
                                         <Image
                                             src={user.image}
-                                            alt={user.name}
+                                            alt={user.name || "User"}
                                             width={44}
                                             height={44}
                                             unoptimized
@@ -215,8 +219,12 @@ export default function Navbar() {
                                     )}
 
                                     <div>
-                                        <p className="font-bold text-slate-800">{user.name}</p>
-                                        <p className="text-xs capitalize text-slate-500">{userRole}</p>
+                                        <p className="font-bold text-slate-800">
+                                            {user.name}
+                                        </p>
+                                        <p className="text-xs capitalize text-slate-500">
+                                            {userRole}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -271,8 +279,20 @@ export default function Navbar() {
                     </div>
                 </div>
             )}
-
         </header>
+    );
+}
+
+// Suspense Boundary for usePathname()
+export default function Navbar() {
+    return (
+        <Suspense
+            fallback={
+                <header className="sticky top-0 z-50 h-[65px] border-b border-slate-100 bg-white/95" />
+            }
+        >
+            <NavbarContent />
+        </Suspense>
     );
 }
 
