@@ -1,5 +1,9 @@
 import TuitionCard from "@/components/TuitionCard";
+import { connection } from "next/server";
 import TuitionSearch from "@/components/TuitionSearch";
+export const instant = false;
+
+
 async function getTuitions() {
     try {
         const res = await fetch("http://localhost:5000/api/tuitions", {
@@ -18,6 +22,9 @@ async function getTuitions() {
 }
 
 export default async function TuitionsPage() {
+
+    await connection();
+
     const tuitions = await getTuitions();
 
     console.log(tuitions);
