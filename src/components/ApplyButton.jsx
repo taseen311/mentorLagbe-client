@@ -28,6 +28,7 @@ export default function ApplyButton({ tuition }) {
                 "http://localhost:5000/api/applications",
                 {
                     method: "POST",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                     },
