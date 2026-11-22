@@ -1,9 +1,14 @@
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -24,6 +29,8 @@ export default function RegisterPage() {
         e.preventDefault();
 
         try {
+            setLoading(true);
+
             const { data, error } = await authClient.signUp.email({
                 name: formData.name,
                 email: formData.email,
@@ -38,17 +45,30 @@ export default function RegisterPage() {
             }
 
             console.log("Registration Successful:", data);
-            alert("Account created successfully!");
+
+            alert("Account created successfully! Welcome to MentorLagbe.");
+
+            // Redirect according to user role
+            if (formData.role === "tutor") {
+                router.replace("/dashboard/tutor");
+            } else {
+                router.replace("/dashboard/student");
+            }
+
+            router.refresh();
 
         } catch (error) {
             console.error("Registration Failed:", error);
             alert("Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-12">
             <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl font-extrabold text-slate-900">
                         Create Your Account
@@ -60,6 +80,7 @@ export default function RegisterPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+
                     <div>
                         <label className="mb-2 block text-sm font-semibold">
                             Full Name
@@ -104,7 +125,7 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             required
                             minLength={8}
-                            placeholder="At least 6 characters"
+                            placeholder="At least 8 characters"
                             className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
                         />
                     </div>
@@ -127,10 +148,12 @@ export default function RegisterPage() {
 
                     <button
                         type="submit"
-                        className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700"
+                        disabled={loading}
+                        className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Create Account
+                        {loading ? "Creating Account..." : "Create Account"}
                     </button>
+
                 </form>
             </div>
         </main>
