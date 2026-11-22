@@ -1,251 +1,276 @@
 
 "use client";
 
-import { useState } from "react";
-import TuitionCard from "@/components/TuitionCard";
-
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function TuitionSearch({ initialTuitions }) {
     const [search, setSearch] = useState("");
-    const [tuitions, setTuitions] = useState(initialTuitions.tuitions);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalTuitions, setTotalTuitions] = useState(
-        initialTuitions.totalTuitions
-    );
-    const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState("");
     const [classLevel, setClassLevel] = useState("");
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
+    const [tuitions, setTuitions] = useState(
+        initialTuitions?.tuitions || []
+    );
+    const [totalTuitions, setTotalTuitions] = useState(
+        initialTuitions?.totalTuitions || 0
+    );
+    const [totalPages, setTotalPages] = useState(
+        initialTuitions?.totalPages || 1
+    );
+    const [currentPage, setCurrentPage] = useState(
+        initialTuitions?.currentPage || 1
+    );
 
-        try {
-            setCurrentPage(1);
-            setLoading(true);
+    const [loading, setLoading] = useState(false);
 
-            const params = new URLSearchParams();
-
-            if (search.trim()) {
-                params.append("search", search.trim());
-            }
-
-            if (mode) {
-                params.append("mode", mode);
-            }
-
-            if (classLevel) {
-                params.append("classLevel", classLevel);
-            }
-
-            const res = await fetch(
-                `http://localhost:5000/api/tuitions?${params.toString()}`,
-                { cache: "no-store" }
-            );
-
-            if (!res.ok) {
-                throw new Error("Failed to search tuitions");
-            }
-
-            const data = await res.json();
-
-            setTuitions(data.tuitions);
-            setTotalTuitions(data.totalTuitions);
-            setTotalPages(data.totalPages);
-            setCurrentPage(data.currentPage);
-
-        } catch (error) {
-            console.error("Search Error:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleReset = async () => {
-        setSearch("");
-        setMode("");
-        setClassLevel("");
-
-        try {
-            setLoading(true);
-
-            const res = await fetch(
-                "http://localhost:5000/api/tuitions",
-                { cache: "no-store" }
-            );
-
-            if (!res.ok) {
-                throw new Error("Failed to reset filters");
-            }
-
-            const data = await res.json();
-
-            setTuitions(data.tuitions);
-            setTotalTuitions(data.totalTuitions);
-            setTotalPages(data.totalPages);
-            setCurrentPage(data.currentPage);
-        } catch (error) {
-            console.error("Reset Error:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    const handlePageChange = async (page) => {
+    const fetchTuitions = async (page = 1) => {
         try {
             setLoading(true);
 
             const params = new URLSearchParams();
 
-            if (search.trim()) params.append("search", search.trim());
-            if (mode) params.append("mode", mode);
-            if (classLevel) params.append("classLevel", classLevel);
+            if (search.trim()) params.set("search", search.trim());
+            if (mode) params.set("mode", mode);
+            if (classLevel) params.set("classLevel", classLevel);
 
-            params.append("page", page);
+            params.set("page", page);
 
-            const res = await fetch(
+            const response = await fetch(
                 `http://localhost:5000/api/tuitions?${params.toString()}`,
                 { cache: "no-store" }
             );
 
-            if (!res.ok) {
-                throw new Error("Failed to change page");
+            if (!response.ok) {
+                throw new Error("Failed to fetch tuitions");
             }
 
-            const data = await res.json();
+            const data = await response.json();
 
-            setTuitions(data.tuitions);
-            setTotalTuitions(data.totalTuitions);
-            setTotalPages(data.totalPages);
-            setCurrentPage(data.currentPage);
-
+            setTuitions(data.tuitions || []);
+            setTotalTuitions(data.totalTuitions || 0);
+            setTotalPages(data.totalPages || 1);
+            setCurrentPage(data.currentPage || page);
         } catch (error) {
-            console.error("Pagination Error:", error);
+            console.error("Fetch Tuitions Error:", error);
+            setTuitions([]);
+            setTotalTuitions(0);
+            setTotalPages(1);
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        const delaySearch = setTimeout(() => {
+            fetchTuitions(1);
+        }, 400);
+
+        return () => clearTimeout(delaySearch);
+    }, [search, mode, classLevel]);
+
+    const handlePageChange = (page) => {
+        if (page < 1 || page > totalPages || page === currentPage) {
+            return;
+        }
+
+        fetchTuitions(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
 
     return (
-        <section>
-            <form onSubmit={handleSearch} className="mb-8 flex gap-3">
-                <div className="flex flex-1 items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
-                    <Search size={20} className="text-slate-400" />
+        <section className="min-h-screen bg-slate-50 px-4 py-12">
+            <div className="mx-auto max-w-7xl">
+
+                {/* Heading */}
+                <div className="mb-10 text-center">
+                    <p className="mb-2 font-semibold uppercase tracking-widest text-indigo-600">
+                        Find Your Perfect Match
+                    </p>
+
+                    <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
+                        Browse Tuition Opportunities
+                    </h1>
+
+                    <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+                        Explore available tuition opportunities and find
+                        the right learning or teaching opportunity for you.
+                    </p>
+                </div>
+
+                {/* Search and Filters */}
+                <div className="mb-8 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-3">
 
                     <input
                         type="text"
+                        placeholder="Search by title, subject..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search by subject, class, title or mode..."
-                        className="w-full outline-none"
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                     />
+
+                    <select
+                        value={mode}
+                        onChange={(e) => setMode(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500"
+                    >
+                        <option value="">All Modes</option>
+                        <option value="Online">Online</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+
+                    <select
+                        value={classLevel}
+                        onChange={(e) => setClassLevel(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500"
+                    >
+                        <option value="">All Classes</option>
+                        <option value="Class 1">Class 1</option>
+                        <option value="Class 2">Class 2</option>
+                        <option value="Class 3">Class 3</option>
+                        <option value="Class 4">Class 4</option>
+                        <option value="Class 5">Class 5</option>
+                        <option value="Class 6">Class 6</option>
+                        <option value="Class 7">Class 7</option>
+                        <option value="Class 8">Class 8</option>
+                        <option value="Class 9">Class 9</option>
+                        <option value="Class 10">Class 10</option>
+                        <option value="Class 11">Class 11</option>
+                        <option value="Class 12">Class 12</option>
+                    </select>
                 </div>
 
-                <select
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value)}
-                    className="rounded-xl border border-slate-200 px-3 py-3"
-                >
-                    <option value="">All Modes</option>
-                    <option value="Online">Online</option>
-                    <option value="Offline">Offline</option>
-                </select>
-
-                <select
-                    value={classLevel}
-                    onChange={(e) => setClassLevel(e.target.value)}
-                    className="rounded-xl border border-slate-200 px-3 py-3"
-                >
-                    <option value="">All Classes</option>
-                    {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i + 1} value={`Class ${i + 1}`}>
-                            Class {i + 1}
-                        </option>
-                    ))}
-                </select>
-
-                <button
-                    type="button"
-                    onClick={handleReset}
-                    disabled={loading}
-                    className="rounded-xl border border-slate-200 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                    Reset
-                </button>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                >
-                    {loading ? "Searching..." : "Search"}
-                </button>
-            </form>
-
-            <p className="mb-6 text-sm font-medium text-slate-600">
-                {tuitions.length} tuition opportunities found
-            </p>
-
-            {tuitions.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {tuitions.map((tuition) => (
-                        <TuitionCard
-                            key={tuition._id}
-                            tuition={tuition}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center">
-                    <h2 className="text-xl font-bold text-slate-800">
-                        No Tuitions Found
-                    </h2>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                        Try searching with a different keyword.
+                {/* Results Count */}
+                <div className="mb-6 flex items-center justify-between">
+                    <p className="font-medium text-slate-700">
+                        {totalTuitions} tuition opportunities found
                     </p>
                 </div>
-            )}
 
-            {totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-3">
+                {/* Tuition Cards */}
+                {loading ? (
+                    <div className="py-20 text-center">
+                        <span className="loading loading-spinner loading-lg text-indigo-600"></span>
+                        <p className="mt-3 text-slate-500">Loading tuitions...</p>
+                    </div>
+                ) : tuitions.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center">
+                        <h3 className="text-xl font-bold text-slate-800">
+                            No Tuitions Found
+                        </h3>
+                        <p className="mt-2 text-slate-500">
+                            Try changing your search or filters.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {tuitions.map((tuition) => (
+                            <div
+                                key={tuition._id}
+                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                            >
+                                {tuition.bannerImage ? (
+                                    <div className="relative h-48 w-full">
+                                        <Image
+                                            src={tuition.bannerImage}
+                                            alt={tuition.title}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-48 items-center justify-center bg-indigo-50 text-5xl">
+                                        📚
+                                    </div>
+                                )}
 
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1 || loading}
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        Previous
-                    </button>
+                                <div className="p-5">
+                                    <div className="mb-3 flex flex-wrap gap-2">
+                                        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                                            {tuition.subject}
+                                        </span>
 
-                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                            {tuition.mode}
+                                        </span>
+                                    </div>
+
+                                    <h2 className="mb-3 text-xl font-bold text-slate-900">
+                                        {tuition.title}
+                                    </h2>
+
+                                    <div className="space-y-2 text-sm text-slate-600">
+                                        <p>
+                                            <strong>Class:</strong>{" "}
+                                            {tuition.classLevel}
+                                        </p>
+                                        <p>
+                                            <strong>Location:</strong>{" "}
+                                            {tuition.location}
+                                        </p>
+                                        <p>
+                                            <strong>Days per week:</strong>{" "}
+                                            {tuition.daysPerWeek}
+                                        </p>
+                                        <p>
+                                            <strong>Monthly Fee:</strong>{" "}
+                                            <span className="font-bold text-indigo-600">
+                                                ৳{tuition.monthlyFee}
+                                            </span>
+                                        </p>
+                                    </div>
+
+                                    <Link
+                                        href={`/tuitions/${tuition._id}`}
+                                        className="mt-5 block rounded-xl bg-indigo-600 py-3 text-center font-semibold text-white transition hover:bg-indigo-700"
+                                    >
+                                        View Details
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {!loading && totalPages > 1 && (
+                    <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+
                         <button
-                            key={i + 1}
-                            onClick={() => handlePageChange(i + 1)}
-                            disabled={loading}
-                            className={`rounded-lg px-4 py-2 text-sm font-semibold ${currentPage === i + 1
-                                ? "bg-blue-600 text-white"
-                                : "border border-slate-200 text-slate-700"
-                                }`}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            {i + 1}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages || loading}
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        Next
-                    </button>
+                        {Array.from(
+                            { length: totalPages },
+                            (_, index) => index + 1
+                        ).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`h-10 w-10 rounded-lg font-semibold transition ${currentPage === page
+                                        ? "bg-indigo-600 text-white"
+                                        : "border border-slate-300 text-slate-700 hover:bg-indigo-50"
+                                    }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
 
-                </div>
-            )}
-
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
+            </div>
         </section>
     );
 }
