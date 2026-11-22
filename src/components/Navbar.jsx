@@ -53,7 +53,7 @@ export default function Navbar() {
                             <span className="text-violet-600">.</span>
                         </p>
                         <p className="-mt-0.5 text-[9px] font-semibold tracking-[2px] text-slate-400">
-                            LEARN • GROW • SUCCEED
+                            LEARN • GROWw • SUCCEED
                         </p>
                     </div>
                 </Link>
