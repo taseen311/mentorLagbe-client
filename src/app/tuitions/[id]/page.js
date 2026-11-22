@@ -1,4 +1,6 @@
+
 import { notFound } from "next/navigation";
+import ApplyButton from "@/components/ApplyButton";
 
 async function getTuition(id) {
     try {
@@ -58,7 +60,9 @@ export default async function TuitionDetailsPage({ params }) {
 
                 <div>
                     <p className="text-sm text-slate-500">Location</p>
-                    <p className="mt-1 font-bold">{tuition.location || "Not specified"}</p>
+                    <p className="mt-1 font-bold">
+                        {tuition.location || "Not specified"}
+                    </p>
                 </div>
 
                 <div>
@@ -70,13 +74,27 @@ export default async function TuitionDetailsPage({ params }) {
 
                 <div>
                     <p className="text-sm text-slate-500">Days Per Week</p>
-                    <p className="mt-1 font-bold">{tuition.daysPerWeek} days</p>
+                    <p className="mt-1 font-bold">
+                        {tuition.daysPerWeek} days
+                    </p>
                 </div>
 
                 <div>
                     <p className="text-sm text-slate-500">Tutor Name</p>
                     <p className="mt-1 font-bold">{tuition.tutorName}</p>
                 </div>
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-3 text-xl font-bold text-slate-900">
+                    Interested in this tuition?
+                </h2>
+
+                <p className="mb-5 text-sm text-slate-500">
+                    Submit your application to let the tutor know you are interested.
+                </p>
+
+                <ApplyButton tuition={JSON.parse(JSON.stringify(tuition))} />
             </div>
         </main>
     );
