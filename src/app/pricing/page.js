@@ -22,8 +22,9 @@ export default function PricingPage() {
         try {
             setLoading(true);
 
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
             const response = await fetch(
-                "http://localhost:5000/api/payments/create-checkout-session",
+                `${apiUrl}/api/payments/create-checkout-session`,
                 {
                     method: "POST",
                     credentials: "include",

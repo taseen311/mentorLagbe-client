@@ -19,10 +19,12 @@ export default function StudentDashboard() {
             return;
         }
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
         const fetchApplications = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/api/applications/my-applications",
+                    `${apiUrl}/api/applications/my-applications`,
                     {
                         cache: "no-store",
                         credentials: "include",

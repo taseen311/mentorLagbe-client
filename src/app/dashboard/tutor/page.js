@@ -18,10 +18,12 @@ export default function TutorDashboard() {
     useEffect(() => {
         if (isPending || session?.user.role !== "tutor") return;
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
         const fetchApplications = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/api/applications/tutor-applications",
+                    `${apiUrl}/api/applications/tutor-applications`,
                     {
                         cache: "no-store",
                         credentials: "include",
@@ -49,10 +51,12 @@ export default function TutorDashboard() {
     useEffect(() => {
         if (isPending || session?.user.role !== "tutor") return;
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
         const fetchMyTuitions = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:5000/api/tuitions/my-tuitions",
+                    `${apiUrl}/api/tuitions/my-tuitions`,
                     {
                         cache: "no-store",
                         credentials: "include",
@@ -80,8 +84,9 @@ export default function TutorDashboard() {
         try {
             setUpdatingId(id);
 
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
             const response = await fetch(
-                `http://localhost:5000/api/applications/${id}/status`,
+                `${apiUrl}/api/applications/${id}/status`,
                 {
                     method: "PATCH",
                     headers: {

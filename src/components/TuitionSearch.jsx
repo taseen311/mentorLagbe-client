@@ -37,8 +37,9 @@ export default function TuitionSearch({ initialTuitions }) {
 
             params.set("page", page);
 
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
             const response = await fetch(
-                `http://localhost:5000/api/tuitions?${params.toString()}`,
+                `${apiUrl}/api/tuitions?${params.toString()}`,
                 { cache: "no-store" }
             );
 

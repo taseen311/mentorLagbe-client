@@ -9,10 +9,12 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
     const fetchPendingTuitions = async () => {
         try {
             const response = await fetch(
-                "http://localhost:5000/api/tuitions/pending",
+                `${apiUrl}/api/tuitions/pending`,
                 { cache: "no-store" }
             );
 
@@ -43,7 +45,7 @@ export default function AdminDashboard() {
             setUpdatingId(id);
 
             const response = await fetch(
-                `http://localhost:5000/api/tuitions/${id}/approval`,
+                `${apiUrl}/api/tuitions/${id}/approval`,
                 {
                     method: "PATCH",
                     headers: {
