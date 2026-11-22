@@ -3,10 +3,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function StudentDashboard() {
     const { data: session, isPending } = authClient.useSession();
+    const router = useRouter();
 
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +17,23 @@ export default function StudentDashboard() {
     useEffect(() => {
         if (isPending) return;
 
-        if (!session || session.user.role !== "student") {
+        if (!session) {
+            router.replace("/login");
+            return;
+        }
+
+        if (session.user?.role === "tutor") {
+            router.replace("/dashboard/tutor");
+            return;
+        }
+
+        if (session.user?.role === "admin") {
+            router.replace("/dashboard/admin");
+            return;
+        }
+
+        if (session.user?.role !== "student") {
+            setLoading(false);
             return;
         }
 
@@ -49,9 +67,9 @@ export default function StudentDashboard() {
         };
 
         fetchApplications();
-    }, [session, isPending]);
+    }, [session, isPending, router]);
 
-    if (isPending || loading) {
+    if (isPending) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center">
                 <p className="font-semibold text-slate-600">
@@ -61,7 +79,7 @@ export default function StudentDashboard() {
         );
     }
 
-    if (!session || session.user.role !== "student") {
+    if (!session || session.user?.role !== "student") {
         return (
             <div className="flex min-h-[60vh] flex-col items-center justify-center px-5 text-center">
                 <h2 className="text-2xl font-bold text-slate-800">
@@ -74,11 +92,23 @@ export default function StudentDashboard() {
                     href="/login"
                     className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white"
                 >
-                    Login
+                    Back to Login
                 </Link>
             </div>
         );
     }
+
+    if (loading) {
+        return (
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <p className="font-semibold text-slate-600">
+                    Loading your applications...
+                </p>
+            </div>
+        );
+    }
+
+
 
     const pendingCount = applications.filter(
         (application) => application.status === "pending"

@@ -3,10 +3,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function TutorDashboard() {
     const { data: session, isPending } = authClient.useSession();
+    const router = useRouter();
 
     const [applications, setApplications] = useState([]);
     const [myTuitions, setMyTuitions] = useState([]);
@@ -16,7 +18,28 @@ export default function TutorDashboard() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (isPending || session?.user.role !== "tutor") return;
+        if (isPending) return;
+
+        if (!session) {
+            router.replace("/login");
+            return;
+        }
+
+        if (session.user?.role === "student") {
+            router.replace("/dashboard/student");
+            return;
+        }
+
+        if (session.user?.role === "admin") {
+            router.replace("/dashboard/admin");
+            return;
+        }
+
+        if (session.user?.role !== "tutor") {
+            setLoading(false);
+            setTuitionLoading(false);
+            return;
+        }
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -45,14 +68,6 @@ export default function TutorDashboard() {
             }
         };
 
-        fetchApplications();
-    }, [session, isPending]);
-
-    useEffect(() => {
-        if (isPending || session?.user.role !== "tutor") return;
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
         const fetchMyTuitions = async () => {
             try {
                 const response = await fetch(
@@ -77,8 +92,9 @@ export default function TutorDashboard() {
             }
         };
 
+        fetchApplications();
         fetchMyTuitions();
-    }, [session, isPending]);
+    }, [session, isPending, router]);
 
     const handleStatusUpdate = async (id, status) => {
         try {
