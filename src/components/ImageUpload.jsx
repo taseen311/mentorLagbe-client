@@ -41,10 +41,23 @@ export default function ImageUpload({ onImageUpload, currentImage,
                 }
             );
 
-            const result = await response.json();
+            const responseText = await response.text();
+
+            console.log("ImgBB Status:", response.status);
+            console.log("ImgBB Response:", responseText);
+
+            let result;
+
+            try {
+                result = JSON.parse(responseText);
+            } catch {
+                throw new Error("ImgBB returned an invalid response. Check the console.");
+            }
 
             if (!response.ok || !result.success) {
-                throw new Error(result.error?.message || "Image upload failed!");
+                throw new Error(
+                    result.error?.message || `Image upload failed: ${response.status}`
+                );
             }
 
             const imageUrl = result.data.display_url;

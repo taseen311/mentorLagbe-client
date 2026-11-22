@@ -1,14 +1,20 @@
 
+
 "use client";
 
+import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import ImageUpload from "@/components/ImageUpload";
 
 export default function PostTuitionPage() {
+    const { data: session, isPending } = authClient.useSession();
+    const user = session?.user;
+
     const [formData, setFormData] = useState({
         title: "",
         subject: "",
         classLevel: "",
+        location: "",
         mode: "Online",
         monthlyFee: "",
         daysPerWeek: "",
@@ -16,6 +22,7 @@ export default function PostTuitionPage() {
     });
 
     const [bannerImage, setBannerImage] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,16 +33,81 @@ export default function PostTuitionPage() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log("Tuition Data:", {
-            ...formData,
-            bannerImage,
-        });
+        if (isPending) return;
 
-        alert("Form data collected! API connection is next.");
+        if (!user) {
+            alert("Please login first!");
+            return;
+        }
+
+        if (user.role !== "tutor") {
+            alert("Only tutors can post tuition!");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await fetch("http://localhost:5000/api/tuitions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    monthlyFee: Number(formData.monthlyFee),
+                    daysPerWeek: Number(formData.daysPerWeek),
+                    bannerImage,
+                    tutorName: user.name,
+                    tutorEmail: user.email,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to create tuition");
+            }
+
+            alert("Tuition posted successfully! Waiting for admin approval.");
+
+            console.log("Created Tuition:", result);
+
+            setFormData({
+                title: "",
+                subject: "",
+                classLevel: "",
+                location: "",
+                mode: "Online",
+                monthlyFee: "",
+                daysPerWeek: "",
+                description: "",
+            });
+
+            setBannerImage("");
+
+        } catch (error) {
+            console.error("Post Tuition Error:", error);
+            alert(error.message || "Something went wrong!");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (isPending) {
+        return <p className="p-10 text-center">Loading...</p>;
+    }
+
+    if (!user) {
+        return <p className="p-10 text-center">Please login to continue.</p>;
+    }
+
+    if (user.role !== "tutor") {
+        return <p className="p-10 text-center">Only tutors can post tuition.</p>;
+    }
 
     return (
         <main className="min-h-screen bg-slate-50 px-5 py-10">
@@ -94,6 +166,20 @@ export default function PostTuitionPage() {
                             value={formData.classLevel}
                             onChange={handleChange}
                             placeholder="e.g. Class 8"
+                            className="w-full rounded-lg border p-3"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block font-semibold">
+                            Location
+                        </label>
+                        <input
+                            name="location"
+                            value={formData.location}
+                            onChange={handleChange}
+                            placeholder="e.g. Barisal, Bangladesh"
                             className="w-full rounded-lg border p-3"
                             required
                         />
@@ -164,9 +250,10 @@ export default function PostTuitionPage() {
 
                     <button
                         type="submit"
-                        className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+                        disabled={loading}
+                        className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Submit Tuition
+                        {loading ? "Submitting..." : "Submit Tuition"}
                     </button>
                 </form>
             </div>
