@@ -9,36 +9,24 @@ const stats = [
         suffix: "+",
         label: "Active Students",
         description: "Learning with confidence",
-        color: "bg-blue-50",
-        textColor: "text-blue-600",
-        borderColor: "border-blue-100",
     },
     {
         value: 5000,
         suffix: "+",
         label: "Qualified Tutors",
         description: "Ready to guide you",
-        color: "bg-violet-50",
-        textColor: "text-violet-600",
-        borderColor: "border-violet-100",
     },
     {
         value: 8500,
         suffix: "+",
         label: "Tuition Opportunities",
         description: "Explore and apply",
-        color: "bg-emerald-50",
-        textColor: "text-emerald-600",
-        borderColor: "border-emerald-100",
     },
     {
         value: 64,
         suffix: "+",
         label: "Subjects Covered",
         description: "Learn what matters to you",
-        color: "bg-amber-50",
-        textColor: "text-amber-600",
-        borderColor: "border-amber-100",
     },
 ];
 
@@ -47,8 +35,8 @@ function Counter({ target }) {
 
     useEffect(() => {
         let current = 0;
-        const duration = 2000;
-        const steps = 60;
+        const duration = 3500;
+        const steps = 100;
         const increment = target / steps;
         const intervalTime = duration / steps;
 
@@ -76,14 +64,14 @@ export default function StatsSection() {
                 {stats.map((stat) => (
                     <div
                         key={stat.label}
-                        className={`rounded-2xl border ${stat.borderColor} ${stat.color} p-5 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-7`}
+                        className="rounded-2xl border border-teal-100 bg-white p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl hover:shadow-slate-200/60 sm:p-7"
                     >
-                        <h2 className={`text-3xl font-extrabold tracking-tight ${stat.textColor} sm:text-4xl`}>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-teal-600 sm:text-4xl">
                             <Counter target={stat.value} />
                             {stat.suffix}
                         </h2>
 
-                        <p className="mt-2 text-sm font-bold text-slate-800 sm:text-base">
+                        <p className="mt-2 text-sm font-bold text-slate-900 sm:text-base">
                             {stat.label}
                         </p>
 
@@ -96,3 +84,4 @@ export default function StatsSection() {
         </section>
     );
 }
+

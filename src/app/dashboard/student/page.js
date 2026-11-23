@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function StudentDashboard() {
     const { data: session, isPending } = authClient.useSession();
@@ -22,22 +23,24 @@ export default function StudentDashboard() {
             return;
         }
 
-        if (session.user?.role === "tutor") {
+        const role = session.user?.role;
+
+        if (role === "tutor") {
             router.replace("/dashboard/tutor");
             return;
         }
 
-        if (session.user?.role === "admin") {
+        if (role === "admin") {
             router.replace("/dashboard/admin");
             return;
         }
 
-        if (session.user?.role !== "student") {
-            setLoading(false);
-            return;
-        }
+        if (role !== "student") return;
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+        let isMounted = true;
 
         const fetchApplications = async () => {
             try {
@@ -46,6 +49,7 @@ export default function StudentDashboard() {
                     {
                         cache: "no-store",
                         credentials: "include",
+                        headers: getAuthHeaders(),
                     }
                 );
 
@@ -57,40 +61,61 @@ export default function StudentDashboard() {
                     );
                 }
 
-                setApplications(data);
+                if (isMounted) {
+                    setApplications(data);
+                }
             } catch (error) {
                 console.error("Applications Fetch Error:", error);
-                setError(error.message);
+
+                if (isMounted) {
+                    setError(error.message);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchApplications();
+
+        return () => {
+            isMounted = false;
+        };
     }, [session, isPending, router]);
 
     if (isPending) {
         return (
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <p className="font-semibold text-slate-600">
-                    Loading your dashboard...
-                </p>
+            <div className="flex min-h-[70vh] items-center justify-center bg-[#f4f7fb]">
+                <div className="text-center">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-teal-600" />
+                    <p className="mt-4 text-sm font-semibold text-slate-500">
+                        Checking your account...
+                    </p>
+                </div>
             </div>
         );
     }
 
     if (!session || session.user?.role !== "student") {
         return (
-            <div className="flex min-h-[60vh] flex-col items-center justify-center px-5 text-center">
-                <h2 className="text-2xl font-bold text-slate-800">
-                    Access Denied
+            <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[#f4f7fb] px-5 text-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-red-50 text-3xl">
+                    🔒
+                </div>
+
+                <h2 className="mt-6 text-2xl font-extrabold text-[#10243a]">
+                    Access Restricted
                 </h2>
-                <p className="mt-2 text-slate-500">
-                    Please login with a student account.
+
+                <p className="mt-2 max-w-sm text-sm leading-7 text-slate-500">
+                    This dashboard is available for student accounts only.
+                    Please sign in with your student account.
                 </p>
+
                 <Link
                     href="/login"
-                    className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white"
+                    className="mt-6 rounded-xl bg-[#10243a] px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-700"
                 >
                     Back to Login
                 </Link>
@@ -100,15 +125,16 @@ export default function StudentDashboard() {
 
     if (loading) {
         return (
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <p className="font-semibold text-slate-600">
-                    Loading your applications...
-                </p>
+            <div className="flex min-h-[70vh] items-center justify-center bg-[#f4f7fb]">
+                <div className="text-center">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-teal-600" />
+                    <p className="mt-4 text-sm font-semibold text-slate-500">
+                        Loading your applications...
+                    </p>
+                </div>
             </div>
         );
     }
-
-
 
     const pendingCount = applications.filter(
         (application) => application.status === "pending"
@@ -122,148 +148,242 @@ export default function StudentDashboard() {
         (application) => application.status === "rejected"
     ).length;
 
+    const stats = [
+        {
+            label: "Total Applications",
+            value: applications.length,
+            icon: "📚",
+            color: "bg-blue-50 text-blue-700",
+        },
+        {
+            label: "Pending Review",
+            value: pendingCount,
+            icon: "⏳",
+            color: "bg-amber-50 text-amber-700",
+        },
+        {
+            label: "Accepted",
+            value: acceptedCount,
+            icon: "✓",
+            color: "bg-emerald-50 text-emerald-700",
+        },
+        {
+            label: "Rejected",
+            value: rejectedCount,
+            icon: "↗",
+            color: "bg-rose-50 text-rose-700",
+        },
+    ];
+
+    const getStatusStyle = (status) => {
+        if (status === "accepted") {
+            return "bg-emerald-50 text-emerald-700 ring-emerald-600/10";
+        }
+
+        if (status === "rejected") {
+            return "bg-rose-50 text-rose-700 ring-rose-600/10";
+        }
+
+        return "bg-amber-50 text-amber-700 ring-amber-600/10";
+    };
+
     return (
-        <main className="min-h-screen bg-slate-50 px-5 py-12 sm:px-8">
-            <div className="mx-auto max-w-6xl">
+        <main className="min-h-screen bg-[#f4f7fb] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+            <div className="mx-auto max-w-7xl">
 
-                {/* Welcome */}
-                <div className="mb-8">
-                    <p className="font-semibold text-blue-600">
-                        STUDENT DASHBOARD
-                    </p>
+                {/* Dashboard Header */}
+                <section className="relative mb-9 overflow-hidden rounded-[28px] bg-[#10243a] px-7 py-9 text-white shadow-xl shadow-slate-900/10 sm:px-10 sm:py-11">
+                    <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border-[40px] border-white/[0.04]" />
+                    <div className="absolute -bottom-32 right-48 h-64 w-64 rounded-full bg-teal-400/[0.06] blur-2xl" />
 
-                    <h1 className="mt-2 text-3xl font-extrabold text-slate-900">
-                        Welcome, {session.user.name}!
-                    </h1>
+                    <div className="relative z-10 flex flex-col justify-between gap-7 md:flex-row md:items-center">
+                        <div>
+                            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2 text-xs font-bold tracking-wider text-teal-300">
+                                <span className="h-2 w-2 rounded-full bg-teal-400" />
+                                STUDENT DASHBOARD
+                            </div>
 
-                    <p className="mt-2 text-slate-500">
-                        Track your tuition applications and their progress.
-                    </p>
-                </div>
+                            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                                Welcome back, {session.user.name || "Student"}!
+                            </h1>
 
-                {/* Statistics */}
-                <div className="mb-10 grid gap-5 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-slate-500">
-                            Total Applications
-                        </p>
-                        <h2 className="mt-2 text-3xl font-extrabold text-slate-900">
-                            {applications.length}
-                        </h2>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-slate-500">
-                            Pending
-                        </p>
-                        <h2 className="mt-2 text-3xl font-extrabold text-amber-500">
-                            {pendingCount}
-                        </h2>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <p className="text-sm text-slate-500">
-                            Accepted
-                        </p>
-                        <h2 className="mt-2 text-3xl font-extrabold text-emerald-600">
-                            {acceptedCount}
-                        </h2>
-                    </div>
-                </div>
-
-                {/* Applications */}
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-2xl font-bold text-slate-900">
-                        My Applications
-                    </h2>
-
-                    <Link
-                        href="/tuitions"
-                        className="rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-700"
-                    >
-                        Browse Tuitions
-                    </Link>
-                </div>
-
-                {error ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-600">
-                        {error}
-                    </div>
-                ) : applications.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
-                        <div className="text-5xl">📚</div>
-
-                        <h3 className="mt-4 text-xl font-bold text-slate-800">
-                            No Applications Yet
-                        </h3>
-
-                        <p className="mt-2 text-slate-500">
-                            Explore available tuitions and apply for your
-                            preferred opportunity.
-                        </p>
+                            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
+                                Keep track of your tuition applications and
+                                stay updated on your learning opportunities.
+                            </p>
+                        </div>
 
                         <Link
                             href="/tuitions"
-                            className="mt-6 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-teal-400 px-6 py-3.5 text-sm font-extrabold text-[#10243a] transition hover:-translate-y-0.5 hover:bg-teal-300"
                         >
                             Explore Tuitions
+                            <span className="text-lg">→</span>
                         </Link>
                     </div>
-                ) : (
-                    <div className="grid gap-5">
-                        {applications.map((application) => (
-                            <div
-                                key={application._id}
-                                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-                            >
-                                <div className="flex flex-wrap items-start justify-between gap-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-900">
-                                            {application.tuitionTitle}
-                                        </h3>
+                </section>
 
-                                        <p className="mt-2 text-sm text-slate-500">
-                                            Tutor: {application.tutorEmail}
-                                        </p>
+                {/* Statistics */}
+                <section className="mb-11 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {stats.map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5"
+                        >
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold text-slate-500">
+                                    {stat.label}
+                                </p>
 
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            Applied on:{" "}
-                                            {new Date(
-                                                application.appliedAt
-                                            ).toLocaleDateString("en-BD")}
-                                        </p>
-                                    </div>
-
-                                    <span
-                                        className={`rounded-full px-4 py-2 text-sm font-semibold capitalize ${application.status === "accepted"
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : application.status === "rejected"
-                                                ? "bg-red-100 text-red-700"
-                                                : "bg-amber-100 text-amber-700"
-                                            }`}
-                                    >
-                                        {application.status}
-                                    </span>
-                                </div>
-
-                                <div className="mt-5 border-t border-slate-100 pt-4">
-                                    <Link
-                                        href={`/tuitions/${application.tuitionId}`}
-                                        className="font-semibold text-blue-600 hover:text-blue-700"
-                                    >
-                                        View Tuition Details →
-                                    </Link>
+                                <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold ${stat.color}`}>
+                                    {stat.icon}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
 
-                {rejectedCount > 0 && (
-                    <p className="mt-5 text-sm text-slate-500">
-                        You have {rejectedCount} rejected application(s).
+                            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#10243a]">
+                                {stat.value}
+                            </h2>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                                Your application overview
+                            </p>
+                        </div>
+                    ))}
+                </section>
+
+                {/* Applications Heading */}
+                <section>
+                    <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">
+                                Your Activity
+                            </p>
+
+                            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#10243a] sm:text-3xl">
+                                My Applications
+                            </h2>
+
+                            <p className="mt-2 text-sm text-slate-500">
+                                Review the status of your submitted applications.
+                            </p>
+                        </div>
+
+                        <span className="w-fit rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600 ring-1 ring-slate-200">
+                            {applications.length} Applications
+                        </span>
+                    </div>
+
+                    {error ? (
+                        <div className="rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-sm">
+                            <div className="text-3xl">⚠️</div>
+
+                            <h3 className="mt-3 text-lg font-bold text-slate-800">
+                                Unable to Load Applications
+                            </h3>
+
+                            <p className="mt-2 text-sm text-rose-600">
+                                {error}
+                            </p>
+
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="mt-5 rounded-xl bg-[#10243a] px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-700"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    ) : applications.length === 0 ? (
+                        <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-5 py-16 text-center shadow-sm sm:px-10">
+                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-teal-50 text-4xl">
+                                📚
+                            </div>
+
+                            <h3 className="mt-6 text-xl font-extrabold text-[#10243a]">
+                                No Applications Yet
+                            </h3>
+
+                            <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
+                                Your learning journey starts with the right
+                                opportunity. Explore available tuitions and
+                                apply for one that matches your goals.
+                            </p>
+
+                            <Link
+                                href="/tuitions"
+                                className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#10243a] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-teal-700"
+                            >
+                                Find Your Tuition
+                                <span>→</span>
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="grid gap-5">
+                            {applications.map((application) => (
+                                <article
+                                    key={application._id}
+                                    className="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition duration-300 hover:border-teal-200 hover:shadow-lg hover:shadow-slate-900/5 sm:p-7"
+                                >
+                                    <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <h3 className="text-lg font-extrabold text-[#10243a] transition group-hover:text-teal-700 sm:text-xl">
+                                                    {application.tuitionTitle}
+                                                </h3>
+
+                                                <span
+                                                    className={`rounded-full px-3 py-1.5 text-xs font-bold capitalize ring-1 ${getStatusStyle(application.status)}`}
+                                                >
+                                                    {application.status}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-4 space-y-2">
+                                                <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                                                    <span className="font-semibold text-slate-700">
+                                                        Tutor:
+                                                    </span>
+                                                    <span className="break-all">
+                                                        {application.tutorEmail}
+                                                    </span>
+                                                </p>
+
+                                                <p className="text-sm text-slate-500">
+                                                    <span className="font-semibold text-slate-700">
+                                                        Applied on:
+                                                    </span>{" "}
+                                                    {new Date(
+                                                        application.appliedAt
+                                                    ).toLocaleDateString("en-BD", {
+                                                        day: "numeric",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <Link
+                                            href={`/tuitions/${application.tuitionId}`}
+                                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-[#10243a] transition hover:border-teal-600 hover:bg-teal-50 hover:text-teal-700"
+                                        >
+                                            View Details
+                                            <span>→</span>
+                                        </Link>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* Footer Note */}
+                <div className="mt-10 border-t border-slate-200 pt-6 text-center">
+                    <p className="text-xs leading-6 text-slate-400">
+                        Stay focused on your goals. Your next learning
+                        opportunity could be just around the corner.
                     </p>
-                )}
+                </div>
+
             </div>
         </main>
     );
